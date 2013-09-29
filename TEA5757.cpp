@@ -4,9 +4,8 @@ This library implements the Philips TEA5757 Radio-on-chip communication protocol
 
 Notes: 
  1. This is NOT compatible with TEA5767!
- 2. This library keeps both TEA5757 I/O pins (P0 and P1) HIGH all the time
-    (as required by most of Philips TEA5757-based tuner modules).
-3. This works for 0.1MHz steps for FM and 10kHz steps for AM
+ 2. This library keeps both TEA5757 I/O pins (P0 and P1) LOW all the time
+ 3. This works for 0.1MHz steps for FM and 10kHz steps for AM
 
                ------------------------------------
 
@@ -153,12 +152,12 @@ void TEA5757::preset(uint16_t frequency, uint8_t band) {
   switch(band) {
     case TEA5757_BAND_FM:
              //4321098765432109876543210
-      data = 0b0000011110000000000000000;
+      data = 0b0000000110000000000000000;
       data += (frequency + 107) * 8; // (freq + FI) / 12,5
       break;
     case TEA5757_BAND_AM:
              //4321098765432109876543210
-      data = 0b0000111110000000000000000;
+      data = 0b0000100110000000000000000;
       data += (frequency + 45) * 10 ; // freq + FI
       break;
     default:
@@ -174,7 +173,7 @@ void TEA5757::preset(uint16_t frequency, uint8_t band) {
 \****************************************************/
 void TEA5757::search(uint8_t band, uint8_t level, uint8_t dir) {
                   //4321098765432109876543210
-  uint32_t data = 0b1000011000000000000000000; // Search mode
+  uint32_t data = 0b1000000000000000000000000; // Enter search mode
 
   if(band == TEA5757_BAND_AM)
             //4321098765432109876543210
@@ -226,18 +225,4 @@ uint16_t TEA5757::getPLLFrequency() {
 \********************************************************/
 uint8_t TEA5757::isStereo() {
   return digitalRead(_mo_st_pin) ? 0 : 1;
-}
-
-
-/*************************************************************\
- *                         isTuned()                         *
- * Return 1 if the radio is tuned                            *
- * Does not look to work well. Actually, I have never seen a *
- * TEA5757-based radios (even Philips' ones) using this      *
- * feature - but i is documented on the datasheet, so...     *
-\*************************************************************/
-uint8_t TEA5757::isTuned() {
-  digitalWrite(_clock_pin, HIGH);
-  return digitalRead(_mo_st_pin) ? 0 : 1;
-  digitalWrite(_clock_pin, LOW);
 }

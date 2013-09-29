@@ -1,7 +1,7 @@
 Library for interfacing Arduino with TEA5757 Radio-on-chip IC
 
 Philips TEA5757 is a (now obsolete) AM/FM radio-on-chip IC,
-which was widely used on Philips’ (and other brands?)
+which was widely used on Philips' (and other brands?)
 middle-to-high-end sound systems.
 
 TEA5757 is one of the easiest radios IC to communicate with 

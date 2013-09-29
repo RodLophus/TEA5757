@@ -43,10 +43,17 @@ X = keys (N.O.)
 #define KEY_SCAN_UP   1
 #define KEY_NONE      0
 
+#define TNR_ERROR          2
+#define TNR_POOR_RECEPTION 1
+#define TNR_NORMAL         0
+
+
 // Initial frequencies
 uint16_t FMFrequency = 885;  // kHz / 100
 uint16_t AMFrequency = 53;   // kHZ / 10
 uint16_t frequency = FMFrequency;
+
+uint8_t tunerStatus = TNR_NORMAL;
 
 // Initial band
 uint8_t band = TEA5757_BAND_FM;
@@ -101,7 +108,6 @@ void loop() {
   uint8_t searchDirection = 0;
   int8_t delta = 0;
   uint8_t i;
-  uint8_t n = 0;
 
   lcd.setCursor(0, 0);
   
@@ -109,7 +115,7 @@ void loop() {
   switch(band) {
     case TEA5757_BAND_FM:
       lcd.print("  FM ");
-      if(frequency < 999) lcd.print(' ');
+      if(frequency < 1000) lcd.print(' ');
       lcd.print(frequency / 10);
       lcd.print('.');
       lcd.print(frequency % 10);
@@ -117,24 +123,30 @@ void loop() {
       break;
     case TEA5757_BAND_AM:
       lcd.print("  AM ");
-      if(frequency < 99) lcd.print(' ');
+      if(frequency < 100) lcd.print(' ');
       lcd.print(frequency * 10);
       lcd.print(" kHz   ");
       break;
   }
   
-  // Status (Tuned / Stereo)
+  // Status / Stereo
   lcd.setCursor(0, 1);
-
-  if(Radio.isTuned())
-    lcd.print("[TUNED]");
-  else
-    lcd.print("[     ]");
-
-  if(Radio.isStereo())
-    lcd.print(" [STEREO]");
-  else
-    lcd.print(" [      ]");
+  switch(tunerStatus) {
+    case TNR_POOR_RECEPTION:
+      lcd.print("Poor Reception!!");
+      break;
+    case TNR_ERROR:
+      lcd.print("  Tuner Error!  ");
+      break;
+    default:
+      if(band == TEA5757_BAND_AM)
+        lcd.print("                ");
+      else
+        if(Radio.isStereo())
+          lcd.print("    [STEREO]    ");
+        else
+          lcd.print("    [      ]    ");
+  }
 
   if(key != KEY_NONE) { // Some key has been pressed
     delay(200);
@@ -161,7 +173,8 @@ void loop() {
     }
     
     if(searchDirection == TEA5757_SEARCH_NONE) { // No search mode = manual tuning
-
+      // There is no way to detect "Poor Reception" in manual tuning mode with TEA5757
+      tunerStatus = TNR_NORMAL;
       frequency += delta;
       switch(band) {
         case TEA5757_BAND_FM:
@@ -187,7 +200,7 @@ void loop() {
         delay(100);
         frequency = Radio.getPLLFrequency();
         if(frequency) { // Tuned!
-          i = 50; // exit the loop
+          i = 50; // Will exit the loop
           switch(band) {
             // Convert PLL frequency to "actual" frequency
             case TEA5757_BAND_FM: frequency = (frequency / 8) - 107; break;
@@ -196,17 +209,30 @@ void loop() {
         }
       }
       
-      if((frequency == previousFrequency) || ((frequency == 0) && ++n)) {
-        if(n > 3) {
-          // No station found (antenna problem?): quit searching
-          frequency = previousFrequency;
-          return;
-        }
+      if(frequency > 2000) {
+        // Tuner error (not connected?): quit searching
+        tunerStatus = TNR_ERROR;
+        frequency = previousFrequency;
+        return;
+      }
+
+      if(frequency == 0) {
+        // No station found (antenna problem?): quit searching
+        tunerStatus = TNR_POOR_RECEPTION;
+        frequency = previousFrequency;
+        Radio.preset(frequency, band);
+        return;
+      }
+     
+      if(frequency == previousFrequency) {
         // Issue a pre-step and try again
-        Radio.preset(frequency + (5 * delta), TEA5757_BAND_FM);
+        frequency += delta;
+        Radio.preset(frequency, band);
         delay(100);
         goto search;
       }
+
+      tunerStatus = TNR_NORMAL;
 
       switch(band) {
         case TEA5757_BAND_FM:

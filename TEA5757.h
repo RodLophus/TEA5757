@@ -29,7 +29,6 @@ class TEA5757 {
 		void search(uint8_t, uint8_t, uint8_t);
 		uint16_t getPLLFrequency();
 		uint8_t isStereo();
-		uint8_t isTuned();
 
 	private:
 		void write(uint32_t);
