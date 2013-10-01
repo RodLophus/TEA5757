@@ -4,7 +4,9 @@ This library implements the Philips TEA5757 Radio-on-chip communication protocol
 
 Notes: 
  1. This is NOT compatible with TEA5767!
- 2. This library keeps both TEA5757 I/O pins (P0 and P1) LOW all the time
+ 2. Check TEA5757_BASE_CONFIG below to set I/O pins (P0 and P1) to suitable values
+    (on Philips' modules, wrong values will prevent the MONO/STEREO indicator 
+	from working properly)
  3. This works for 0.1MHz steps for FM and 10kHz steps for AM
 
                ------------------------------------
@@ -42,6 +44,11 @@ POSSIBILITY OF SUCH DAMAGE.
 // Default delay (us)
 // This is also the base timing for clock pulses
 #define TEA5757_DELAY 5
+
+// All data sent to TEA5757 will be OR'ed with
+// this value.  Use this, for example, to set 
+// ports P0 and P1            4321098765432109876543210
+#define TEA5757_BASE_CONFIG 0b0000011000000000000000000;
 
 
 /******************************\
@@ -151,13 +158,13 @@ void TEA5757::preset(uint16_t frequency, uint8_t band) {
   uint32_t data;
   switch(band) {
     case TEA5757_BAND_FM:
-             //4321098765432109876543210
-      data = 0b0000000110000000000000000;
+              //4321098765432109876543210
+      data |= 0b0000000110000000000000000 | TEA5757_BASE_CONFIG;
       data += (frequency + 107) * 8; // (freq + FI) / 12,5
       break;
     case TEA5757_BAND_AM:
-             //4321098765432109876543210
-      data = 0b0000100110000000000000000;
+              //4321098765432109876543210
+      data |= 0b0000100110000000000000000 | TEA5757_BASE_CONFIG;
       data += (frequency + 45) * 10 ; // freq + FI
       break;
     default:
@@ -173,7 +180,7 @@ void TEA5757::preset(uint16_t frequency, uint8_t band) {
 \****************************************************/
 void TEA5757::search(uint8_t band, uint8_t level, uint8_t dir) {
                   //4321098765432109876543210
-  uint32_t data = 0b1000000000000000000000000; // Enter search mode
+  uint32_t data = 0b1000000000000000000000000 | TEA5757_BASE_CONFIG; // Enter search mode
 
   if(band == TEA5757_BAND_AM)
             //4321098765432109876543210
