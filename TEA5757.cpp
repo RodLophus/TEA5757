@@ -45,10 +45,15 @@ POSSIBILITY OF SUCH DAMAGE.
 // This is also the base timing for clock pulses
 #define TEA5757_DELAY 5
 
-// All data sent to TEA5757 will be OR'ed with
-// this value.  Use this, for example, to set 
-// ports P0 and P1            4321098765432109876543210
-#define TEA5757_BASE_CONFIG 0b0000011000000000000000000;
+// All data sent to TEA5757 will be OR'ed with this value.
+// Use this, for example, to set the outputs of I/O ports P0 and P1.  
+// On Philips radio modules, the wrong setting may prevent the 
+// stereo indicator from working properly.
+// - Philips DVD receiver modules usually requires:
+#define TEA5757_BASE_CONFIG 0b0000011000000000000000000
+// - For Philips ECO6 and other stereo modules, try:
+//#define TEA5757_BASE_CONFIG 0b0000000000000000000000000;
+
 
 
 /******************************\
